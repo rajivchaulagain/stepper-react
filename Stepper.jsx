@@ -1,7 +1,7 @@
 // Stepper.jsx
 
 const { useState } = React;
-// const { Select } = window.ReactSelect;
+const { Select } = window.ReactSelect;
 
 const data = {
   courseType: [
