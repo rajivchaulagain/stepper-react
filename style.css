@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
 
+:root{
+    --primary : #3597d1;
+    --secondary : #ac769e
+}
 body {
     margin: 0;
     padding: 0;
@@ -32,7 +36,7 @@ ul{
 }
 
 .card {
-    border: 1px solid blue;
+    border: 1px solid var(--primary);
     margin: 1rem;
     flex: 1;
 }
@@ -66,7 +70,23 @@ ul{
     border: 0;
 }
 
-.prev-button {}
+.next-rounded-button {
+    border-radius: 1.5rem;
+    border:0;
+    color: #fff;
+    background-color: var(--primary);
+    padding: 1rem 2.5rem;
+}
+.prev-rounded-button{
+    border-radius: 1.5rem;
+    border:1px solid #000;
+    padding: 1rem 2.5rem;
+    background-color: transparent;
+}
+
+button:disabled{
+    opacity: .5 !important;
+}
 
 .rounded-button {
     border-radius: 1rem;
@@ -87,6 +107,19 @@ input {
 }
 
 /* card */
+.course-type-body.card-body{
+    padding: 2rem;
+}
+
+.course-type-body .rounded-button {
+    margin-bottom: 1.25rem;
+}
+
+.course-type .fa-clock{
+    margin-bottom: 2rem;
+    font-size: 2rem;
+}
+
 .course-type-body {
     display: flex;
     justify-content: space-between;
@@ -166,4 +199,7 @@ hr{
 
 .showing-results ul li i{
     margin-right: .5rem;
+}
+.select-wrapper{
+    flex: 1;
 }
