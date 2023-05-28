@@ -303,7 +303,7 @@ const Stepper = () => {
       <div className="stepper-body">
         {currentStep === 1 && (
           <div className="step">
-            <div className="d-flex align-items-center">
+            <div className="d-flex align-items-center" style={{flexWrap : 'nowrap'}}>
             <SectionTitle
               title="Select course type"
               paragraph="We offer a wide range of full and part time courses cross Longford and Westmeath. Full time courses take place during the day and part time course are more flexible, courses are offered during the day, in the evening or online. Courses will be filtered according to your chosen option."
