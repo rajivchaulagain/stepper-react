@@ -89,8 +89,8 @@ const data = {
 const SectionTitle = ({ title, paragraph }) => {
   return (
     <div className="section-title">
-      <h2>{title}</h2>
-      <p>{paragraph}</p>
+      <h2 className="title">{title}</h2>
+      <p className="paragraph">{paragraph}</p>
     </div>
   );
 };
@@ -107,10 +107,8 @@ const SelectCourseCard = ({
     <div className="card course-type" onClick={onClick}>
       <div className="card-body course-type-body">
         <div className="">
-        <i class="far fa-clock"></i>       
-          <p>
-            {title}
-            </p>
+          <i class="far fa-clock"></i>
+          <p>{title}</p>
         </div>
         <div style={{ textAlign: "right" }}>
           <button className={`rounded-button ${isSelected && "selected"}`}>{`${
@@ -127,7 +125,7 @@ const SelectCourseCard = ({
               ) : (
                 <div>
                   <input type="checkbox" disabled={!isSelected} />
-                  <label style={{marginRight : '1rem'}}>Day-time</label>
+                  <label style={{ marginRight: "1rem" }}>Day-time</label>
                   <input type="checkbox" disabled={!isSelected} />
                   <label>Evening-time</label>
                 </div>
@@ -141,7 +139,6 @@ const SelectCourseCard = ({
 };
 
 const CourseFormCard = (props) => {
-
   return (
     <div className="course-form box-shadow">
       <div className="input-wrapper">
@@ -185,7 +182,7 @@ const CourseFormCard = (props) => {
             ))}
           </select>
           <Select
-          className="select-interest"
+            className="select-interest"
             isMulti
             options={data.interestArea.map((area) => ({
               value: area.id,
@@ -194,7 +191,7 @@ const CourseFormCard = (props) => {
             defaultValue={props.interestArea.map((area) => ({
               value: area.id,
               label: area.title,
-            }))}           
+            }))}
             styles={{
               control: (baseStyles, state) => ({
                 ...baseStyles,
@@ -247,6 +244,111 @@ const ShowingResults = (props) => {
   );
 };
 
+const Button = () => {};
+
+const Stepper1 = (props) => {
+  return (
+    <div className="step step-1">
+      <div className="d-flex align-items-center" style={{ flexWrap: "nowrap" }}>
+        <SectionTitle
+          title="Select course type"
+          paragraph="We offer a wide range of full and part time courses cross Longford and Westmeath. Full time courses take place during the day and part time course are more flexible, courses are offered during the day, in the evening or online. Courses will be filtered according to your chosen option."
+        />
+        <button
+          disabled={!props.selectedCourseType}
+          onClick={props.handleNext}
+          className="next-rounded-button"
+          // style={{ float: "right" }}
+        >
+          Next
+        </button>
+      </div>
+      <div className="wrapper d-flex">
+        {data.courseType.map((courseType) => (
+          <SelectCourseCard
+            id={courseType.id}
+            title={courseType.title}
+            key={courseType.id}
+            isSelected={props.selectedCourseType === courseType}
+            onClick={() => props.handleCourseTypeSelection(courseType)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Stepper2 = (props) => {
+  const {
+    handleNext,
+    handlePrevious,
+    selectedInterestArea,
+    handleInterestAreaSelection,
+  } = props;
+  return (
+    <div className="step step-2">
+      <button
+        disabled={selectedInterestArea.length === 0}
+        onClick={handleNext}
+        style={{ float: "right" }}
+        className="next-rounded-button"
+      >
+        Next
+      </button>
+      <button
+        onClick={handlePrevious}
+        style={{ float: "left" }}
+        className="prev-rounded-button"
+      >
+        Previous
+      </button>
+      <SectionTitle
+        title="Interest Area"
+        paragraph="We offer a wide range of full and part time courses cross Longford and Westmeath. Full time courses take place during the day and part time course are more flexible, courses are offered during the day, in the evening or online. Courses will be filtered according to your chosen option."
+      />
+      <div className="d-flex">
+        {data.interestArea.map((interestArea) => (
+          <SelectCourseCard
+            id={interestArea.id}
+            title={interestArea.title}
+            key={interestArea.id}
+            showCheckbox={false}
+            isSelected={selectedInterestArea.includes(interestArea)}
+            onClick={() => handleInterestAreaSelection(interestArea)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Stepper3 = (props) => {
+  const { handlePrevious, children, searchResults } = props;
+  return (
+    <div className="step step-3">
+      <button
+        onClick={handlePrevious}
+        style={{ float: "left" }}
+        className="prev-rounded-button"
+      >
+        Previous
+      </button>
+      <SectionTitle
+        title="Choose Course"
+        paragraph="We offer a wide range of full and part time courses cross Longford and Westmeath. Full time courses take place during the day and part time course are more flexible, courses are offered during the day, in the evening or online. Courses will be filtered according to your chosen option."
+      />
+      {children}
+      <div style={{ margin: "1rem 0" }}>
+        <h4 style={{ marginBottom: 0 }}>Showing results</h4>
+        <span>{searchResults.length} courses</span>
+      </div>
+      {searchResults.map((searchVaue) => (
+        <ShowingResults searchVaue={searchVaue} key={searchVaue.id} />
+      ))}
+    </div>
+  );
+};
+
 const Stepper = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedCourseType, setSelectedCourseType] = useState(null);
@@ -293,85 +395,40 @@ const Stepper = () => {
   if (!data || !data.courseType || !data.interestArea || !data.location) {
     return <div>Error: Data is missing or invalid.</div>;
   }
-
-  console.log(selectedCourseType, selectedInterestArea, selectedLocation);
-
   return (
     <div className="stepper">
       {/* header of stepper */}
-      <div className="header-stepper"></div>
+      <div className="header-stepper">
+        <div className={`step-number ${currentStep === 1 ? 'active' : ''}`}>1</div>
+        <div className="step-divider dashed"></div>
+        <div className={`step-number ${currentStep === 2 ? 'active' : ''}`}>2</div>
+        <div className="step-divider dashed"></div>
+        <div className={`step-number ${currentStep === 3 ? 'active' : ''}`}>3</div>
+      </div>
+      {/* header of stepper ends*/}
+
+      {/* stepper body starts */}
       <div className="stepper-body">
         {currentStep === 1 && (
-          <div className="step">
-            <div className="d-flex align-items-center" style={{flexWrap : 'nowrap'}}>
-            <SectionTitle
-              title="Select course type"
-              paragraph="We offer a wide range of full and part time courses cross Longford and Westmeath. Full time courses take place during the day and part time course are more flexible, courses are offered during the day, in the evening or online. Courses will be filtered according to your chosen option."
-            />
-               <button
-              disabled={!selectedCourseType}
-              onClick={handleNext}
-              className="next-rounded-button"
-              // style={{ float: "right" }}
-            >
-              Next
-            </button>
-            </div>
-            <div className="wrapper d-flex">
-              {data.courseType.map((courseType) => (
-                <SelectCourseCard
-                  id={courseType.id}
-                  title={courseType.title}
-                  key={courseType.id}
-                  isSelected={selectedCourseType === courseType}
-                  onClick={() => handleCourseTypeSelection(courseType)}
-                />
-              ))}
-            </div>
-          </div>
+          <Stepper1
+            handleNext={handleNext}
+            selectedCourseType={selectedCourseType}
+            handleCourseTypeSelection={handleCourseTypeSelection}
+          />
         )}
-
         {currentStep === 2 && (
-          <div className="step">
-            <button
-              disabled={selectedInterestArea.length === 0}
-              onClick={handleNext}
-              style={{ float: "right" }}
-              className="next-rounded-button"
-            >
-              Next
-            </button>
-            <button onClick={handlePrevious} style={{ float: "left" }} className="prev-rounded-button">
-              Previous
-            </button>
-            <SectionTitle
-              title="Interest Area"
-              paragraph="We offer a wide range of full and part time courses cross Longford and Westmeath. Full time courses take place during the day and part time course are more flexible, courses are offered during the day, in the evening or online. Courses will be filtered according to your chosen option."
-            />
-            <div className="d-flex">
-              {data.interestArea.map((interestArea) => (
-                <SelectCourseCard
-                  id={interestArea.id}
-                  title={interestArea.title}
-                  key={interestArea.id}
-                  showCheckbox={false}
-                  isSelected={selectedInterestArea.includes(interestArea)}
-                  onClick={() => handleInterestAreaSelection(interestArea)}
-                />
-              ))}
-            </div>
-          </div>
+          <Stepper2
+            selectedInterestArea={selectedInterestArea}
+            handleInterestAreaSelection={handleInterestAreaSelection}
+            handleNext={handleNext}
+            handlePrevious={handlePrevious}
+          />
         )}
-
         {currentStep === 3 && (
-          <div className="step step-3">
-            <button onClick={handlePrevious} style={{ float: "left" }} className="prev-rounded-button">
-              Previous
-            </button>
-            <SectionTitle
-              title="Choose Course"
-              paragraph="We offer a wide range of full and part time courses cross Longford and Westmeath. Full time courses take place during the day and part time course are more flexible, courses are offered during the day, in the evening or online. Courses will be filtered according to your chosen option."
-            />
+          <Stepper3
+            handlePrevious={handlePrevious}
+            searchResults={searchResults}
+          >
             <CourseFormCard
               inputSearch={inputSearch}
               handleSearch={handleSearch}
@@ -382,16 +439,10 @@ const Stepper = () => {
               selectedLocation={selectedLocation}
               handleLocationSelection={handleLocationSelection}
             />
-            <div style={{ margin: "1rem 0" }}>
-              <h4 style={{ marginBottom: 0 }}>Showing results</h4>
-              <span>{searchResults.length} courses</span>
-            </div>
-            {searchResults.map((searchVaue) => (
-              <ShowingResults searchVaue={searchVaue} key={searchVaue.id} />
-            ))}
-          </div>
+          </Stepper3>
         )}
       </div>
+      {/* stepper body starts */}
     </div>
   );
 };

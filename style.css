@@ -8,6 +8,7 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'Roboto', sans-serif;
+    font-weight: 400;
 }
 
 ul{
@@ -24,6 +25,29 @@ ul{
     background-color: rebeccapurple;
     height: 10rem;
     color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header-stepper .step-number.active {
+    border: 5px solid var(--primary);
+  }
+
+  /* .step-divider.dashed {
+    border-top: 1px dashed #ddd;
+  } */
+
+.header-stepper .step-number {
+    background: #ffff;
+    width: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    color: #000;
+    height: 60px;
+    margin: 0 4rem;
 }
 
 .stepper-body {
@@ -33,6 +57,17 @@ ul{
 
 .section-title {
     text-align: center;
+    width: 70%;
+    margin: 0 auto;
+}
+
+.section-title .title{
+    font-size: 2rem;
+}
+
+.section-title .paragraph{
+    color: #787880;
+    font-weight: 300;
 }
 
 .card {
