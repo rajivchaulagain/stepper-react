@@ -72,9 +72,19 @@ ul{
     font-weight: 300;
 }
 
-.col-3{
-    flex-basis: 33.33%;
-}
+/* Styles for smaller devices (less than 768px) */
+@media (max-width: 767px) {
+    .col-3 {
+      flex-basis: 100%;
+    }
+  }
+  
+  /* Styles for larger devices (768px and above) */
+  @media (min-width: 768px) {
+    .col-3 {
+      flex-basis: 33.33%;
+    }
+  }
 
 .card {
     border: 1px solid var(--primary);

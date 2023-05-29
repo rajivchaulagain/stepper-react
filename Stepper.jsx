@@ -119,6 +119,8 @@ const SelectCourseCard = ({
   id,
   code,
   showCheckbox = true,
+  selectedDeliveryTime,
+  handleCheckboxChange
 }) => {
   console.log(title, id, code);
   return (
@@ -143,11 +145,30 @@ const SelectCourseCard = ({
               ) : (
                 code === "P" && (
                   <div>
-                    <input type="checkbox" disabled={!isSelected} />
-                    <label style={{ marginRight: "1rem" }}>Day-time</label>
-                    <input type="checkbox" disabled={!isSelected} />
-                    <label>Evening-time</label>
-                  </div>
+                  <label>
+                    <input
+                      type="checkbox"
+                      name="DeliveryTime"
+                      value="Daytime"
+                      disabled={!isSelected}
+                      checked={selectedDeliveryTime === "Daytime"}
+                      onChange={handleCheckboxChange}
+                    />
+                    Daytime
+                  </label>
+            
+                  <label>
+                    <input
+                      type="checkbox"
+                      name="DeliveryTime"
+                      value="EveningTime"
+                      disabled={!isSelected}
+                      checked={selectedDeliveryTime === "EveningTime"}
+                      onChange={handleCheckboxChange}
+                    />
+                    Evening Time
+                  </label>
+                </div>
                 )
               )}
             </div>
@@ -375,6 +396,8 @@ const Stepper1 = (props) => {
                 title={courseType.Description}
                 key={courseType.Id}
                 isSelected={props.selectedCourseType === courseType}
+                selectedDeliveryTime={props.selectedDeliveryTime}
+                handleCheckboxChange={props.handleCheckboxChange}
                 onClick={() => props.handleCourseTypeSelection(courseType)}
               />
             </div>
@@ -466,6 +489,7 @@ const Stepper = () => {
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedCourseType, setSelectedCourseType] = useState(null);
+  const [selectedDeliveryTime, setSelectedDeliveryTime] = useState(null);
   const [selectedInterestArea, setSelectedInterestArea] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [inputSearch, setInputSearch] = useState("");
@@ -480,7 +504,12 @@ const Stepper = () => {
   };
 
   const handleCourseTypeSelection = (courseType) => {
+    console.log(courseType);
+    if(courseType.Code === "F"){
+      setSelectedDeliveryTime("Daytime")
+    }
     setSelectedCourseType(courseType);
+    setSelectedDeliveryTime('')
     // handleNext();
   };
   const handleInterestAreaSelection = (interestArea) => {
@@ -497,6 +526,9 @@ const Stepper = () => {
     setSelectedLocation(location);
   };
 
+  const handleCheckboxChange = (event) => {
+    setSelectedDeliveryTime(event.target.value);
+  };
   const handleSearch = (value) => {
     console.log("dada", { value });
     setInputSearch(value);
@@ -523,6 +555,8 @@ const Stepper = () => {
   const isStepEditable = (step) => {
     return currentStep > step;
   };
+
+  console.log({selectedDeliveryTime , selectedCourseType});
 
   useEffect(() => {
     Promise.all([
@@ -587,6 +621,8 @@ const Stepper = () => {
             handleNext={handleNext}
             selectedCourseType={selectedCourseType}
             handleCourseTypeSelection={handleCourseTypeSelection}
+            selectedDeliveryTime={selectedDeliveryTime}
+            handleCheckboxChange={handleCheckboxChange}
           />
         )}
         {currentStep === 2 && (
