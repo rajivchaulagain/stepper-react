@@ -28,6 +28,7 @@ ul{
     display: flex;
     justify-content: center;
     align-items: center;
+    text-align: center;
 }
 
 .header-stepper .step-number.active {
@@ -47,7 +48,8 @@ ul{
     border-radius: 50%;
     color: #000;
     height: 60px;
-    margin: 0 4rem;
+    margin: 10px 4rem;
+    cursor: pointer;
 }
 
 .stepper-body {
@@ -68,6 +70,10 @@ ul{
 .section-title .paragraph{
     color: #787880;
     font-weight: 300;
+}
+
+.col-3{
+    flex-basis: 33.33%;
 }
 
 .card {
@@ -160,10 +166,6 @@ input {
     justify-content: space-between;
 }
 
-.course-type-body div {
-    flex: 1;
-}
-
 .step-3 {
     /* background-color: #ccc; */
     padding: 2rem;
@@ -221,7 +223,7 @@ hr{
 }
 
 .showing-results{
-    margin-bottom: 1.25rem;
+    margin: 2.25rem 0;
 }
 
 .showing-results ul{
@@ -229,7 +231,7 @@ hr{
 }
 
 .showing-results ul li{
-    padding: 0rem .5rem;
+    padding-right: 2rem;
 }
 
 .showing-results ul li i{

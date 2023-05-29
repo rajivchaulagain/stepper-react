@@ -1,6 +1,6 @@
 // Stepper.jsx
 
-const { useState } = React;
+const { useState, useEffect } = React;
 
 const data = {
   courseType: [
@@ -85,6 +85,23 @@ const data = {
     },
   ],
 };
+ 
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    // Update debounced value after delay
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    // Cancel the timeout if value changes (also on delay change or unmount)
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]); // Only re-call effect if value or delay changes
+
+  return debouncedValue;
+}
 
 const SectionTitle = ({ title, paragraph }) => {
   return (
@@ -100,9 +117,10 @@ const SelectCourseCard = ({
   onClick,
   isSelected,
   id,
+  code,
   showCheckbox = true,
 }) => {
-  console.log(title, id);
+  console.log(title, id, code);
   return (
     <div className="card course-type" onClick={onClick}>
       <div className="card-body course-type-body">
@@ -117,18 +135,20 @@ const SelectCourseCard = ({
           {showCheckbox && (
             <div>
               <p>Choose your time slot</p>
-              {id === 1 ? (
+              {code === "F" ? (
                 <div>
                   <input type="checkbox" disabled={!isSelected} checked />
                   <label>Day-time</label>
                 </div>
               ) : (
-                <div>
-                  <input type="checkbox" disabled={!isSelected} />
-                  <label style={{ marginRight: "1rem" }}>Day-time</label>
-                  <input type="checkbox" disabled={!isSelected} />
-                  <label>Evening-time</label>
-                </div>
+                code === "P" && (
+                  <div>
+                    <input type="checkbox" disabled={!isSelected} />
+                    <label style={{ marginRight: "1rem" }}>Day-time</label>
+                    <input type="checkbox" disabled={!isSelected} />
+                    <label>Evening-time</label>
+                  </div>
+                )
               )}
             </div>
           )}
@@ -139,14 +159,71 @@ const SelectCourseCard = ({
 };
 
 const CourseFormCard = (props) => {
+  const { courseType } = props;
+  const [isLoading , setIsLoading] = useState(true);
+  const [searchResults , setSearchResults] = useState([]);
+  const [formValues, setFormValues] = useState({
+    keyword : "",
+    courseType: props.courseType,
+    location: "",
+    interestArea: props.interestArea.map((area) => ({
+      value: area.Id,
+      label: area.Description,
+    })),
+  });
+  const search = useDebounce(formValues.keyword , 1000)
+
+  const handleFormChange = (field, value) => {
+    setFormValues((prevFormValues) => ({
+      ...prevFormValues,
+      [field]: value,
+    }));
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+
+      const requestData = {
+        "Category Ids": formValues.interestArea.map((item) => item.value),
+        Keywords: formValues.keyword,
+        "Location Ids": Number(formValues.location),
+      };
+
+      try {
+        const response = await fetch(
+          "https://service.fetchcourses.ie/service/fetchcourse.svc/json/SearchCourseListSummaryAdvanced",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestData),
+          }
+        );
+
+        const data = await response.json();
+        setSearchResults(data.SearchCourseListSummaryAdvancedResult.courses);
+      } catch (error) {
+        console.error("Error:", error);
+      }
+
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, [formValues]);
+
   return (
+    <div>
     <div className="course-form box-shadow">
       <div className="input-wrapper">
         <input
           type="text"
           placeholder="Search course..."
-          value={props.inputSearch}
-          onChange={(e) => props.handleSearch(e.target.value)}
+          value={formValues.keyword}
+          name="keyword"
+          onChange={(e) => handleFormChange("keyword" , e.target.value)}
         />
         <span className="text-primary">Find Course</span>
       </div>
@@ -154,43 +231,41 @@ const CourseFormCard = (props) => {
       <div>
         <label>Filters</label>
         <div className="select-wrapper">
-          <select value={props.courseType.title}>
+          <select value={formValues.courseType.Id} 
+              onChange={(e) => handleFormChange("courseType", e.target.value)}>
             <option
               disabled
               selected
               value=""
-              onChange={() =>
-                props.handleCourseTypeSelection(props.courseType.title)
-              }
             >
               Course Type
             </option>
-            {data.courseType.map((type) => (
-              <option key={type.id} value={type.title}>
-                {type.title}
+            {props.data.courseType.map((type) => (
+              <option key={type.Id} value={type.Id}>
+                {type.Description}
               </option>
             ))}
           </select>
-          <select>
-            <option disabled selected value="">
+          <select name="location" value={formValues.location} onChange={(e) => handleFormChange("location", e.target.value)}>
+            <option value="" disabled selected>
               Location
             </option>
-            {data.location.map((loc) => (
-              <option key={loc.id} value={loc.title}>
-                {loc.title}
+            {props.data.areaList.map((loc) => (
+              <option key={loc.Id} value={loc.Id}>
+                {loc.Description}
               </option>
             ))}
           </select>
           <Select
             className="select-interest"
             isMulti
-            options={data.interestArea.map((area) => ({
-              value: area.id,
-              label: area.title,
+            options={props.data.interestArea.map((area) => ({
+              value: area.Id,
+              label: area.Description,
             }))}
             defaultValue={props.interestArea.map((area) => ({
-              value: area.id,
-              label: area.title,
+              value: area.Id,
+              label: area.Description,
             }))}
             styles={{
               control: (baseStyles, state) => ({
@@ -198,44 +273,72 @@ const CourseFormCard = (props) => {
                 flex: 1,
               }),
             }}
+            onChange={(selectedOptions) =>
+              handleFormChange(
+                "interestArea",
+                selectedOptions.map((option) => option)
+              )
+            }
             // value={selectedOption}
             // onChange={handleChange}
           />
         </div>
       </div>
     </div>
+    <div style={{ margin: "3rem 0" }}>
+          {isLoading ? "loading... " : (
+            <div>
+              <div>
+                  <h4 style={{ marginBottom: 0 }}>Showing results</h4>
+                  <span>{searchResults.length} courses</span>
+                </div>
+                {searchResults.map((searchVaue) => (
+                  <ShowingResults searchVaue={searchVaue} key={searchVaue.id} />
+                ))}
+            </div>
+          )}
+    </div>
+    </div>
   );
 };
 
 const ShowingResults = (props) => {
   const { searchVaue } = props;
+  const startDate = new Date(parseInt(searchVaue.DateActualStart.substr(6)));
+  const closingDate = new Date(parseInt(searchVaue.DateClosing.substr(6)));
+  
+  const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000; // Number of milliseconds in a week
+  const weeksDifference = Math.abs(Math.floor((closingDate - startDate) / millisecondsPerWeek));
+  
+  console.log(weeksDifference);
+  
   return (
     <div className="showing-results">
       <div className="card-body box-shadow">
         <div>
           <h3>
-            <span className="text-primary">TU869</span>
-            {searchVaue.title}
+            <span className="text-primary" style={{paddingRight : '3rem'}}>{searchVaue.CourseId}</span>
+            {searchVaue.CourseTitle}
           </h3>
           <hr />
         </div>
         <div>
           <ul>
             <li>
-              <i className="fa fa-clock-o"></i>
-              {searchVaue.courseType}
+            <i class="far fa-clock"></i>
+              {searchVaue.DeliveryType}
             </li>
             <li>
-              <i className="fa fa-map-marker"></i>
-              {searchVaue.location}
+              <i className="far fa-map-marker-alt"></i>
+              {searchVaue.CourseLocation}
             </li>
             <li>
-              <i className="fa fa-clock"></i>
-              {searchVaue.duration}
+            <i class="far fa-clock"></i>
+              {weeksDifference} weeks
             </li>
             <li>
-              <i className="fa fa-hand"></i>
-              {searchVaue.interestArea}
+              <i className="fa fa-hand-holding-heart"></i>
+              {searchVaue.CategoryDescription}
             </li>
           </ul>
         </div>
@@ -243,8 +346,6 @@ const ShowingResults = (props) => {
     </div>
   );
 };
-
-const Button = () => {};
 
 const Stepper1 = (props) => {
   return (
@@ -264,15 +365,20 @@ const Stepper1 = (props) => {
         </button>
       </div>
       <div className="wrapper d-flex">
-        {data.courseType.map((courseType) => (
-          <SelectCourseCard
-            id={courseType.id}
-            title={courseType.title}
-            key={courseType.id}
-            isSelected={props.selectedCourseType === courseType}
-            onClick={() => props.handleCourseTypeSelection(courseType)}
-          />
-        ))}
+        {props.data.courseType
+          .filter((item) => item.Code !== "E")
+          .map((courseType) => (
+            <div className="col-3">
+              <SelectCourseCard
+                code={courseType.Code}
+                id={courseType.Id}
+                title={courseType.Description}
+                key={courseType.Id}
+                isSelected={props.selectedCourseType === courseType}
+                onClick={() => props.handleCourseTypeSelection(courseType)}
+              />
+            </div>
+          ))}
       </div>
     </div>
   );
@@ -284,7 +390,17 @@ const Stepper2 = (props) => {
     handlePrevious,
     selectedInterestArea,
     handleInterestAreaSelection,
+    data,
   } = props;
+  const [interestAreas, setInterestAreas] = useState([]);
+  useEffect(() => {
+    fetch(
+      "https://service.fetchcourses.ie/service/fetchcourse.svc/json/GetCourseCategoryList"
+    )
+      .then((res) => res.json())
+      .then((data) => setInterestAreas(data.ReferenceList));
+  }, []);
+  console.log(data.interestArea);
   return (
     <div className="step step-2">
       <button
@@ -308,14 +424,16 @@ const Stepper2 = (props) => {
       />
       <div className="d-flex">
         {data.interestArea.map((interestArea) => (
-          <SelectCourseCard
-            id={interestArea.id}
-            title={interestArea.title}
-            key={interestArea.id}
-            showCheckbox={false}
-            isSelected={selectedInterestArea.includes(interestArea)}
-            onClick={() => handleInterestAreaSelection(interestArea)}
-          />
+          <div className="col-3">
+            <SelectCourseCard
+              id={interestArea.Id}
+              title={interestArea.Description}
+              key={interestArea.Id}
+              showCheckbox={false}
+              isSelected={selectedInterestArea.includes(interestArea)}
+              onClick={() => handleInterestAreaSelection(interestArea)}
+            />
+          </div>
         ))}
       </div>
     </div>
@@ -323,7 +441,8 @@ const Stepper2 = (props) => {
 };
 
 const Stepper3 = (props) => {
-  const { handlePrevious, children, searchResults } = props;
+  const { handlePrevious, children, searchResults, data } = props;
+  console.log(props.searchResults);
   return (
     <div className="step step-3">
       <button
@@ -338,24 +457,19 @@ const Stepper3 = (props) => {
         paragraph="We offer a wide range of full and part time courses cross Longford and Westmeath. Full time courses take place during the day and part time course are more flexible, courses are offered during the day, in the evening or online. Courses will be filtered according to your chosen option."
       />
       {children}
-      <div style={{ margin: "1rem 0" }}>
-        <h4 style={{ marginBottom: 0 }}>Showing results</h4>
-        <span>{searchResults.length} courses</span>
-      </div>
-      {searchResults.map((searchVaue) => (
-        <ShowingResults searchVaue={searchVaue} key={searchVaue.id} />
-      ))}
     </div>
   );
 };
 
 const Stepper = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedCourseType, setSelectedCourseType] = useState(null);
   const [selectedInterestArea, setSelectedInterestArea] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [inputSearch, setInputSearch] = useState("");
-  const [searchResults, setSearchResults] = useState(data.mockResults);
+  const [searchResults, setSearchResults] = useState([]);
 
   const handleNext = () => {
     setCurrentStep(currentStep + 1);
@@ -392,18 +506,76 @@ const Stepper = () => {
     setSearchResults(filteredResults);
   };
 
-  if (!data || !data.courseType || !data.interestArea || !data.location) {
-    return <div>Error: Data is missing or invalid.</div>;
-  }
+  // if (!data || !data.courseType || !data.interestArea || !data.location) {
+  //   return <div>Error: Data is missing or invalid.</div>;
+  // }
+  const isStepCompleted = (step) => {
+    if (step === 1) {
+      return selectedCourseType !== null;
+    } else if (step === 2) {
+      return selectedInterestArea.length > 0;
+    } else if (step === 3) {
+      return step === 2; // Assuming step 3 is always completed
+    }
+    return false;
+  };
+
+  const isStepEditable = (step) => {
+    return currentStep > step;
+  };
+
+  useEffect(() => {
+    Promise.all([
+      fetch(
+        "https://service.fetchcourses.ie/service/fetchcourse.svc/json/GetDeliveryCriteriaList"
+      ).then((res) => res.json()),
+      fetch(
+        "https://service.fetchcourses.ie/service/fetchcourse.svc/json/GetCourseCategoryList"
+      ).then((res) => res.json()),
+      fetch(
+        "https://service.fetchcourses.ie/service/fetchcourse.svc/json/GetAreaList"
+      ).then((res) => res.json()),
+    ])
+      .then(([deliveryCriteria, courseCategory, areaLists]) => {
+        setData({
+          courseType: deliveryCriteria.ReferenceList,
+          interestArea: courseCategory.ReferenceList,
+          areaList: areaLists.ReferenceList,
+        });
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return "loading.....";
+
   return (
     <div className="stepper">
       {/* header of stepper */}
       <div className="header-stepper">
-        <div className={`step-number ${currentStep === 1 ? 'active' : ''}`}>1</div>
+        <div onClick={() => setCurrentStep(1)}>
+          <div className={`step-number ${currentStep === 1 ? "active" : ""}`}>
+            {isStepCompleted(1) ? <i className="fas fa-check"></i> : "1"}
+          </div>
+          {isStepEditable(1) ? "edit" : ""}
+        </div>
         <div className="step-divider dashed"></div>
-        <div className={`step-number ${currentStep === 2 ? 'active' : ''}`}>2</div>
+        <div onClick={() => setCurrentStep(2)}>
+          <div className={`step-number ${currentStep === 2 ? "active" : ""}`}>
+            {isStepCompleted(2) ? <i className="fas fa-check"></i> : "2"}
+          </div>
+          {isStepEditable(2) ? "edit" : ""}
+        </div>
         <div className="step-divider dashed"></div>
-        <div className={`step-number ${currentStep === 3 ? 'active' : ''}`}>3</div>
+        <div
+          className={`step-number ${currentStep === 3 ? "active" : ""}`}
+          onClick={() => setCurrentStep(3)}
+        >
+          {isStepCompleted(3) ? <i className="fas fa-check"></i> : "3"}
+        </div>
       </div>
       {/* header of stepper ends*/}
 
@@ -411,6 +583,7 @@ const Stepper = () => {
       <div className="stepper-body">
         {currentStep === 1 && (
           <Stepper1
+            data={data}
             handleNext={handleNext}
             selectedCourseType={selectedCourseType}
             handleCourseTypeSelection={handleCourseTypeSelection}
@@ -418,6 +591,7 @@ const Stepper = () => {
         )}
         {currentStep === 2 && (
           <Stepper2
+            data={data}
             selectedInterestArea={selectedInterestArea}
             handleInterestAreaSelection={handleInterestAreaSelection}
             handleNext={handleNext}
@@ -428,8 +602,11 @@ const Stepper = () => {
           <Stepper3
             handlePrevious={handlePrevious}
             searchResults={searchResults}
+            data={data}
           >
             <CourseFormCard
+              data={data}
+              setSearchResults={setSearchResults}
               inputSearch={inputSearch}
               handleSearch={handleSearch}
               courseType={selectedCourseType}
